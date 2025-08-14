@@ -24,20 +24,25 @@ public class Main {
 
         while (true) {
             printMenu();
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
+            try {
+                int choice = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
 
-            switch (choice) {
-                case 1 -> addBook();
-                case 2 -> viewBooks();
-                case 3 -> placeOrder();
-                case 4 -> processOrder();
-                case 5 -> {
-                    DataManager.saveBooks(bookService.getAllBooks(), BOOKS_FILE);
-                    System.out.println("Data saved. Exiting...");
-                    return;
+                switch (choice) {
+                    case 1 -> addBook();
+                    case 2 -> viewBooks();
+                    case 3 -> placeOrder();
+                    case 4 -> processOrder();
+                    case 5 -> {
+                        DataManager.saveBooks(bookService.getAllBooks(), BOOKS_FILE);
+                        System.out.println("Data saved. Exiting...");
+                        return;
+                    }
+                    default -> System.out.println("Invalid choice. Please try again.");
                 }
-                default -> System.out.println("Invalid choice. Please try again.");
+            } catch (java.util.InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine(); // Clear the invalid input
             }
         }
     }
@@ -53,18 +58,44 @@ public class Main {
     }
 
     private static void addBook() {
-        System.out.print("Enter book ID: ");
-        String id = scanner.nextLine();
-        System.out.print("Enter book title: ");
-        String title = scanner.nextLine();
-        System.out.print("Enter book author: ");
-        String author = scanner.nextLine();
-        System.out.print("Enter book price: ");
-        double price = scanner.nextDouble();
-        scanner.nextLine(); // Consume newline
+        String id = readLimitedString("Enter book ID: ", 256);
+        String title = readLimitedString("Enter book title: ", 256);
+        String author = readLimitedString("Enter book author: ", 256);
+        double price = readDouble("Enter book price: ");
 
-        bookService.addBook(new Book(id, title, author, price));
-        System.out.println("Book added successfully!");
+        if (price > 0) {
+            bookService.addBook(new Book(id, title, author, price));
+            System.out.println("Book added successfully!");
+        } else {
+            System.out.println("Invalid price. Please enter a positive number.");
+        }
+    }
+
+    private static String readLimitedString(String prompt, int limit) {
+        String input;
+        while (true) {
+            System.out.print(prompt);
+            input = scanner.nextLine();
+            if (input.length() <= limit) {
+                return input;
+            } else {
+                System.out.println("Input exceeds the " + limit + " character limit. Please try again.");
+            }
+        }
+    }
+
+    private static double readDouble(String prompt) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                double value = scanner.nextDouble();
+                scanner.nextLine(); // Consume newline
+                return value;
+            } catch (java.util.InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine(); // Clear the invalid input
+            }
+        }
     }
 
     private static void viewBooks() {

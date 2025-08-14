@@ -1,8 +1,9 @@
 package com.bookstore.models;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Order {
+public class Order implements Serializable {
     private String id;
     private String customerId;
     private List<Book> books;
