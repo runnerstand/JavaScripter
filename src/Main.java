@@ -11,7 +11,7 @@ public class Main {
     private static final BookService bookService = new BookService();
     private static final OrderService orderService = new OrderService();
     private static final Scanner scanner = new Scanner(System.in);
-    private static final String BOOKS_FILE = "data/books.dat";
+    private static final String BOOKS_FILE = "data/books.csv";
 
     public static void main(String[] args) {
         // Load existing data
@@ -29,16 +29,24 @@ public class Main {
                 scanner.nextLine(); // Consume newline
 
                 switch (choice) {
-                    case 1 -> addBook();
-                    case 2 -> viewBooks();
-                    case 3 -> placeOrder();
-                    case 4 -> processOrder();
-                    case 5 -> {
+                    case 1:
+                        addBook();
+                        break;
+                    case 2:
+                        viewBooks();
+                        break;
+                    case 3:
+                        placeOrder();
+                        break;
+                    case 4:
+                        processOrder();
+                        break;
+                    case 5:
                         DataManager.saveBooks(bookService.getAllBooks(), BOOKS_FILE);
                         System.out.println("Data saved. Exiting...");
                         return;
-                    }
-                    default -> System.out.println("Invalid choice. Please try again.");
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
                 }
             } catch (java.util.InputMismatchException e) {
                 System.out.println("Invalid input. Please enter a number.");
