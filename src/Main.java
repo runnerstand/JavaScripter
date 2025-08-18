@@ -5,6 +5,8 @@ import com.bookstore.services.BookService;
 import com.bookstore.services.CustomerService;
 import com.bookstore.services.OrderService;
 import com.bookstore.utils.DataManager;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
@@ -154,6 +156,10 @@ public class Main {
             System.out.println("Book not found.");
             return;
         }
+
+        //Create a new modfiable ArrayList
+        List<Book> orderBooks = new ArrayList<>();
+        orderBooks.add(book);
 
         Order order = new Order("ORD" + System.currentTimeMillis(), customerId, Collections.singletonList(book));
         orderService.placeOrder(order);

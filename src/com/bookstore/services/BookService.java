@@ -29,18 +29,20 @@ public class BookService {
         }
     }
 
-    public void updateBook(Book updatedBook) {
-        for (int i = 0; i < books.size(); i++) {
-            if (books.get(i).getId().equals(updatedBook.getId())) {
-                books.set(i, updatedBook);
-                return;
-            }
+public void updateBook(Book updatedBook) {
+    for (int i = 0; i < books.size(); i++) {
+        if (books.get(i).getId().equals(updatedBook.getId())) {
+            books.set(i, updatedBook);
+            addedBooksStack.clear();
+            return;
         }
     }
+}
 
-    public void deleteBook(String id) {
-        books.removeIf(book -> book.getId().equals(id));
-    }
+public void deleteBook(String id) {
+    books.removeIf(book -> book.getId().equals(id));
+    addedBooksStack.clear();
+}
 
     public Book findBookById(String id) {
         return books.stream()
