@@ -38,4 +38,18 @@ public class OrderService {
     public boolean hasPendingOrders() {
         return !orderQueue.isEmpty();
     }
+
+    public Order findOrderById(String id) {
+        Order order = orderQueue.stream()
+                .filter(o -> o.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+        if (order != null) {
+            return order;
+        }
+        return processedOrders.stream()
+                .filter(o -> o.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
 }

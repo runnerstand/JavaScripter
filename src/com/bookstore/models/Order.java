@@ -1,6 +1,8 @@
 package com.bookstore.models;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class Order implements Serializable {
@@ -13,6 +15,8 @@ public class Order implements Serializable {
         this.id = id;
         this.customerId = customerId;
         this.books = books;
+        // Sort books by title
+        Collections.sort(this.books, Comparator.comparing(Book::getTitle));
         this.totalPrice = calculateTotalPrice();
     }
 
