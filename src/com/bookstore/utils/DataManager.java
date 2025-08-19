@@ -1,6 +1,8 @@
 package com.bookstore.utils;
 
 import com.bookstore.models.Book;
+import com.bookstore.models.Customer;
+import com.bookstore.models.Order;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -55,5 +57,92 @@ public class DataManager {
             e.printStackTrace();
         }
         return books;
+    }
+
+    public static void saveCustomers(List<Customer> customers, String filename) {
+        File file = new File(filename);
+        file.getParentFile().mkdirs();
+
+        try (PrintWriter writer = new PrintWriter(file)) {
+            writer.println("id,name");
+            for (Customer customer : customers) {
+                writer.printf("%s,%s%n", customer.getId(), customer.getName());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static List<Customer> loadCustomers(String filename) {
+        List<Customer> customers = new ArrayList<>();
+        File file = new File(filename);
+        if (!file.exists()) {
+            return customers;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line = reader.readLine(); // Skip header
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    customers.add(new Customer(parts[0], parts[1]));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return customers;
+    }
+
+    public static void saveOrders(List<Order> orders, String filename) {
+        File file = new File(filename);
+        file.getParentFile().mkdirs();
+
+        try (PrintWriter writer = new PrintWriter(file)) {
+            writer.println("id,customerId,bookIds");
+            for (Order order : orders) {
+                List<String> bookIds = new ArrayList<>();
+                for (Book book : order.getBooks()) {
+                    bookIds.add(book.getId());
+                }
+                writer.printf("%s,%s,%s%n", order.getId(), order.getCustomerId(), String.join(";", bookIds));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static List<Order> loadOrders(String filename, List<Book> allBooks) {
+        List<Order> orders = new ArrayList<>();
+        File file = new File(filename);
+        if (!file.exists()) {
+            return orders;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line = reader.readLine(); // Skip header
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 3) {
+                    String id = parts[0];
+                    String customerId = parts[1];
+                    String[] bookIds = parts[2].split(";");
+                    
+                    List<Book> orderBooks = new ArrayList<>();
+                    for (String bookId : bookIds) {
+                        for (Book book : allBooks) {
+                            if (book.getId().equals(bookId)) {
+                                orderBooks.add(book);
+                                break;
+                            }
+                        }
+                    }
+                    orders.add(new Order(id, customerId, orderBooks));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return orders;
     }
 }

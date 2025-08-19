@@ -30,4 +30,8 @@ public class CustomerService {
         }
         return customer;
     }
+
+    public List<Customer> getAllCustomers() {
+        return new ArrayList<>(customers);
+    }
 }

@@ -17,18 +17,47 @@ public class Main {
     private static final CustomerService customerService = new CustomerService();
     private static final Scanner scanner = new Scanner(System.in);
     private static final String BOOKS_FILE = "data/books.csv";
+    private static final String CUSTOMERS_FILE = "data/customers.csv";
+    private static final String ORDERS_FILE = "data/orders.csv";
 
     public static void main(String[] args) {
+        boolean isAdmin = false;
+        if (args.length > 0 && args[0].equalsIgnoreCase("--admin")) {
+            isAdmin = true;
+        }
+
         // Load existing data
         List<Book> loadedBooks = DataManager.loadBooks(BOOKS_FILE);
         for (Book book : loadedBooks) {
             bookService.addBook(book);
         }
 
+        List<Customer> loadedCustomers = DataManager.loadCustomers(CUSTOMERS_FILE);
+        for (Customer customer : loadedCustomers) {
+            customerService.addCustomer(customer);
+        }
+
+        List<Order> loadedOrders = DataManager.loadOrders(ORDERS_FILE, loadedBooks);
+        for (Order order : loadedOrders) {
+            Customer customer = customerService.findCustomerById(order.getCustomerId());
+            if (customer != null) {
+                customer.addOrder(order);
+            }
+            orderService.placeOrder(order);
+        }
+
         System.out.println("Welcome to the Online Bookstore!");
 
+        if (isAdmin) {
+            runAdminConsole();
+        } else {
+            runUserConsole();
+        }
+    }
+
+    private static void runAdminConsole() {
         while (true) {
-            printMenu();
+            printAdminMenu();
             try {
                 int choice = scanner.nextInt();
                 scanner.nextLine(); // Consume newline
@@ -50,19 +79,12 @@ public class Main {
                         deleteBook();
                         break;
                     case 6:
-                        placeOrder();
-                        break;
-                    case 7:
-                        viewOrderHistory();
-                        break;
-                    case 8:
-                        trackOrder();
-                        break;
-                    case 9:
                         processOrder();
                         break;
-                    case 10:
+                    case 7:
                         DataManager.saveBooks(bookService.getAllBooks(), BOOKS_FILE);
+                        DataManager.saveCustomers(customerService.getAllCustomers(), CUSTOMERS_FILE);
+                        DataManager.saveOrders(orderService.getAllOrders(), ORDERS_FILE);
                         System.out.println("Data saved. Exiting...");
                         return;
                     default:
@@ -75,18 +97,61 @@ public class Main {
         }
     }
 
-    private static void printMenu() {
-        System.out.println("\n--- Bookstore Menu ---");
+    private static void runUserConsole() {
+        while (true) {
+            printUserMenu();
+            try {
+                int choice = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+
+                switch (choice) {
+                    case 1:
+                        viewBooks();
+                        break;
+                    case 2:
+                        placeOrder();
+                        break;
+                    case 3:
+                        viewOrderHistory();
+                        break;
+                    case 4:
+                        trackOrder();
+                        break;
+                    case 5:
+                        DataManager.saveBooks(bookService.getAllBooks(), BOOKS_FILE);
+                        DataManager.saveCustomers(customerService.getAllCustomers(), CUSTOMERS_FILE);
+                        DataManager.saveOrders(orderService.getAllOrders(), ORDERS_FILE);
+                        System.out.println("Data saved. Exiting...");
+                        return;
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            } catch (java.util.InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine(); // Clear the invalid input
+            }
+        }
+    }
+
+    private static void printAdminMenu() {
+        System.out.println("\n--- Admin Menu ---");
         System.out.println("1. Add a new book");
         System.out.println("2. Undo add book");
         System.out.println("3. View all books");
         System.out.println("4. Update a book");
         System.out.println("5. Delete a book");
-        System.out.println("6. Place an order");
-        System.out.println("7. View order history");
-        System.out.println("8. Track order");
-        System.out.println("9. Process next order");
-        System.out.println("10. Save and Exit");
+        System.out.println("6. Process next order");
+        System.out.println("7. Save and Exit");
+        System.out.print("Enter your choice: ");
+    }
+
+    private static void printUserMenu() {
+        System.out.println("\n--- User Menu ---");
+        System.out.println("1. View all books");
+        System.out.println("2. Place an order");
+        System.out.println("3. View order history");
+        System.out.println("4. Track order");
+        System.out.println("5. Save and Exit");
         System.out.print("Enter your choice: ");
     }
 

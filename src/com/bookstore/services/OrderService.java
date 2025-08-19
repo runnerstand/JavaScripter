@@ -52,4 +52,10 @@ public class OrderService {
                 .findFirst()
                 .orElse(null);
     }
+
+    public List<Order> getAllOrders() {
+        List<Order> allOrders = new ArrayList<>(processedOrders);
+        allOrders.addAll(orderQueue);
+        return allOrders;
+    }
 }
