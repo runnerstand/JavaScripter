@@ -7,8 +7,8 @@ import com.bookstore.services.OrderService;
 import com.bookstore.utils.DataManager;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
@@ -37,13 +37,20 @@ public class Main {
             customerService.addCustomer(customer);
         }
 
-        List<Order> loadedOrders = DataManager.loadOrders(ORDERS_FILE, loadedBooks);
-        for (Order order : loadedOrders) {
+        Map<String, List<Order>> loadedOrders = DataManager.loadOrders(ORDERS_FILE, loadedBooks);
+        for (Order order : loadedOrders.get("PENDING")) {
             Customer customer = customerService.findCustomerById(order.getCustomerId());
             if (customer != null) {
                 customer.addOrder(order);
             }
             orderService.placeOrder(order);
+        }
+        for (Order order : loadedOrders.get("PROCESSED")) {
+            Customer customer = customerService.findCustomerById(order.getCustomerId());
+            if (customer != null) {
+                customer.addOrder(order);
+            }
+            orderService.addProcessedOrder(order);
         }
 
         System.out.println("Welcome to the Online Bookstore!");
@@ -84,7 +91,7 @@ public class Main {
                     case 7:
                         DataManager.saveBooks(bookService.getAllBooks(), BOOKS_FILE);
                         DataManager.saveCustomers(customerService.getAllCustomers(), CUSTOMERS_FILE);
-                        DataManager.saveOrders(orderService.getAllOrders(), ORDERS_FILE);
+                        DataManager.saveOrders(orderService.getAllOrders(), orderService.getPendingOrders(), ORDERS_FILE);
                         System.out.println("Data saved. Exiting...");
                         return;
                     default:
@@ -120,7 +127,7 @@ public class Main {
                     case 5:
                         DataManager.saveBooks(bookService.getAllBooks(), BOOKS_FILE);
                         DataManager.saveCustomers(customerService.getAllCustomers(), CUSTOMERS_FILE);
-                        DataManager.saveOrders(orderService.getAllOrders(), ORDERS_FILE);
+                        DataManager.saveOrders(orderService.getAllOrders(), orderService.getPendingOrders(), ORDERS_FILE);
                         System.out.println("Data saved. Exiting...");
                         return;
                     default:
@@ -226,7 +233,7 @@ public class Main {
         List<Book> orderBooks = new ArrayList<>();
         orderBooks.add(book);
 
-        Order order = new Order("ORD" + System.currentTimeMillis(), customerId, Collections.singletonList(book));
+        Order order = new Order("ORD" + System.currentTimeMillis(), customerId, orderBooks);
         orderService.placeOrder(order);
         customer.addOrder(order);
         System.out.println("Order placed successfully!");

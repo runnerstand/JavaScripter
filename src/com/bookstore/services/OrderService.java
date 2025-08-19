@@ -58,4 +58,12 @@ public class OrderService {
         allOrders.addAll(orderQueue);
         return allOrders;
     }
+
+    public void addProcessedOrder(Order order) {
+        processedOrders.add(order);
+    }
+
+    public Queue<Order> getPendingOrders() {
+        return orderQueue;
+    }
 }

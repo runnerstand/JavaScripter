@@ -9,7 +9,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 public class DataManager {
 
@@ -94,26 +97,30 @@ public class DataManager {
         return customers;
     }
 
-    public static void saveOrders(List<Order> orders, String filename) {
+    public static void saveOrders(List<Order> allOrders, Queue<Order> pendingOrders, String filename) {
         File file = new File(filename);
         file.getParentFile().mkdirs();
 
         try (PrintWriter writer = new PrintWriter(file)) {
-            writer.println("id,customerId,bookIds");
-            for (Order order : orders) {
+            writer.println("id,customerId,bookIds,status"); // Add status column
+            for (Order order : allOrders) {
                 List<String> bookIds = new ArrayList<>();
                 for (Book book : order.getBooks()) {
                     bookIds.add(book.getId());
                 }
-                writer.printf("%s,%s,%s%n", order.getId(), order.getCustomerId(), String.join(";", bookIds));
+                // Check if the order is still in the pending queue
+                String status = pendingOrders.contains(order) ? "PENDING" : "PROCESSED";
+                writer.printf("%s,%s,%s,%s%n", order.getId(), order.getCustomerId(), String.join(";", bookIds), status);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static List<Order> loadOrders(String filename, List<Book> allBooks) {
-        List<Order> orders = new ArrayList<>();
+    public static Map<String, List<Order>> loadOrders(String filename, List<Book> allBooks) {
+        Map<String, List<Order>> orders = new HashMap<>();
+        orders.put("PENDING", new ArrayList<>());
+        orders.put("PROCESSED", new ArrayList<>());
         File file = new File(filename);
         if (!file.exists()) {
             return orders;
@@ -123,11 +130,12 @@ public class DataManager {
             String line = reader.readLine(); // Skip header
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
-                if (parts.length == 3) {
+                if (parts.length == 4) {
                     String id = parts[0];
                     String customerId = parts[1];
                     String[] bookIds = parts[2].split(";");
-                    
+                    String status = parts[3];
+
                     List<Book> orderBooks = new ArrayList<>();
                     for (String bookId : bookIds) {
                         for (Book book : allBooks) {
@@ -137,7 +145,12 @@ public class DataManager {
                             }
                         }
                     }
-                    orders.add(new Order(id, customerId, orderBooks));
+                    Order order = new Order(id, customerId, orderBooks);
+                    if ("PENDING".equals(status)) {
+                        orders.get("PENDING").add(order);
+                    } else {
+                        orders.get("PROCESSED").add(order);
+                    }
                 }
             }
         } catch (IOException e) {
