@@ -16,9 +16,9 @@ public class Main {
     private static final OrderService orderService = new OrderService();
     private static final CustomerService customerService = new CustomerService();
     private static final Scanner scanner = new Scanner(System.in);
-    private static final String BOOKS_FILE = "data/books.csv";
-    private static final String CUSTOMERS_FILE = "data/customers.csv";
-    private static final String ORDERS_FILE = "data/orders.csv";
+    private static final String BOOKS_FILE = "data/books.dat";
+    private static final String CUSTOMERS_FILE = "data/customers.dat";
+    private static final String ORDERS_FILE = "data/orders.dat";
 
     public static void main(String[] args) {
         boolean isAdmin = false;

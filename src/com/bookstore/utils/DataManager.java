@@ -3,11 +3,7 @@ package com.bookstore.utils;
 import com.bookstore.models.Book;
 import com.bookstore.models.Customer;
 import com.bookstore.models.Order;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,17 +13,8 @@ import java.util.Queue;
 public class DataManager {
 
     public static void saveBooks(List<Book> books, String filename) {
-        File file = new File(filename);
-        file.getParentFile().mkdirs(); // Ensure the directory exists
-
-        try (PrintWriter writer = new PrintWriter(file)) {
-            // Write header
-            writer.println("id,title,author,price");
-            // Write book data
-            for (Book book : books) {
-                writer.printf("%s,%s,%s,%.2f%n",
-                        book.getId(), book.getTitle(), book.getAuthor(), book.getPrice());
-            }
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+            oos.writeObject(books);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -37,40 +24,21 @@ public class DataManager {
         List<Book> books = new ArrayList<>();
         File file = new File(filename);
         if (!file.exists()) {
-            return books; // Return empty list if file doesn't exist
+            return books;
         }
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line = reader.readLine(); // Skip header
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 4) {
-                    try {
-                        String id = parts[0];
-                        String title = parts[1];
-                        String author = parts[2];
-                        double price = Double.parseDouble(parts[3]);
-                        books.add(new Book(id, title, author, price));
-                    } catch (NumberFormatException e) {
-                        System.err.println("Skipping invalid book entry: " + line);
-                    }
-                }
-            }
-        } catch (IOException e) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
+            @SuppressWarnings("unchecked")
+            List<Book> loadedBooks = (List<Book>) ois.readObject();
+            books = loadedBooks;
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return books;
     }
 
     public static void saveCustomers(List<Customer> customers, String filename) {
-        File file = new File(filename);
-        file.getParentFile().mkdirs();
-
-        try (PrintWriter writer = new PrintWriter(file)) {
-            writer.println("id,name");
-            for (Customer customer : customers) {
-                writer.printf("%s,%s%n", customer.getId(), customer.getName());
-            }
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+            oos.writeObject(customers);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -82,36 +50,23 @@ public class DataManager {
         if (!file.exists()) {
             return customers;
         }
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line = reader.readLine(); // Skip header
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 2) {
-                    customers.add(new Customer(parts[0], parts[1]));
-                }
-            }
-        } catch (IOException e) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
+            @SuppressWarnings("unchecked")
+            List<Customer> loadedCustomers = (List<Customer>) ois.readObject();
+            customers = loadedCustomers;
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return customers;
     }
 
     public static void saveOrders(List<Order> allOrders, Queue<Order> pendingOrders, String filename) {
-        File file = new File(filename);
-        file.getParentFile().mkdirs();
+        Map<String, List<Order>> ordersToSave = new HashMap<>();
+        ordersToSave.put("ALL", allOrders);
+        ordersToSave.put("PENDING", new ArrayList<>(pendingOrders));
 
-        try (PrintWriter writer = new PrintWriter(file)) {
-            writer.println("id,customerId,bookIds,status"); // Add status column
-            for (Order order : allOrders) {
-                List<String> bookIds = new ArrayList<>();
-                for (Book book : order.getBooks()) {
-                    bookIds.add(book.getId());
-                }
-                // Check if the order is still in the pending queue
-                String status = pendingOrders.contains(order) ? "PENDING" : "PROCESSED";
-                writer.printf("%s,%s,%s,%s%n", order.getId(), order.getCustomerId(), String.join(";", bookIds), status);
-            }
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+            oos.writeObject(ordersToSave);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -125,35 +80,20 @@ public class DataManager {
         if (!file.exists()) {
             return orders;
         }
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line = reader.readLine(); // Skip header
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 4) {
-                    String id = parts[0];
-                    String customerId = parts[1];
-                    String[] bookIds = parts[2].split(";");
-                    String status = parts[3];
-
-                    List<Book> orderBooks = new ArrayList<>();
-                    for (String bookId : bookIds) {
-                        for (Book book : allBooks) {
-                            if (book.getId().equals(bookId)) {
-                                orderBooks.add(book);
-                                break;
-                            }
-                        }
-                    }
-                    Order order = new Order(id, customerId, orderBooks);
-                    if ("PENDING".equals(status)) {
-                        orders.get("PENDING").add(order);
-                    } else {
-                        orders.get("PROCESSED").add(order);
-                    }
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
+            @SuppressWarnings("unchecked")
+            Map<String, List<Order>> loadedOrders = (Map<String, List<Order>>) ois.readObject();
+            List<Order> all = loadedOrders.get("ALL");
+            List<Order> pending = loadedOrders.get("PENDING");
+            List<Order> processed = new ArrayList<>();
+            for (Order order : all) {
+                if (!pending.contains(order)) {
+                    processed.add(order);
                 }
             }
-        } catch (IOException e) {
+            orders.put("PENDING", pending);
+            orders.put("PROCESSED", processed);
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return orders;
