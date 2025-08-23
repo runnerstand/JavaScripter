@@ -38,6 +38,9 @@ public class Main {
         }
 
         Map<String, List<Order>> loadedOrders = DataManager.loadOrders(ORDERS_FILE, loadedBooks);
+        for (Customer customer : customerService.getAllCustomers()) {
+            customer.getOrderHistory().clear();
+        }
         for (Order order : loadedOrders.get("PENDING")) {
             Customer customer = customerService.findCustomerById(order.getCustomerId());
             if (customer != null) {
