@@ -23,6 +23,7 @@ public class OrderService {
     public Order processNextOrder() {
         Order order = orderQueue.poll();
         if (order != null) {
+            order.setStatus("CONFIRMED");
             processedOrders.add(order);
             System.out.println("Processing order: " + order.getId());
         } else {
